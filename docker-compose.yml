@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./src:/app/src
+      - ./temp_audio:/app/temp_audio
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env
+      - ./credentials.json:/app/credentials.json
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - bot-network
+
+  db:
+    image: nouchka/sqlite3:latest
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    networks:
+      - bot-network
+
+volumes:
+  temp_audio:
+  data:
+
+networks:
+  bot-network:
+    driver: bridge 
