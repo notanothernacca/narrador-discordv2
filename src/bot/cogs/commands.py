@@ -126,5 +126,96 @@ class CommandsCog(commands.Cog):
             logger.error(f"Error en comando salir: {str(e)}")
             await interaction.followup.send("❌ Error al desconectar")
 
+    @app_commands.command(name="metrics", description="Muestra métricas del bot")
+    @app_commands.describe(tipo="Tipo de métricas a mostrar")
+    @app_commands.choices(tipo=[
+        app_commands.Choice(name="general", value="general"),
+        app_commands.Choice(name="voz", value="voice"),
+        app_commands.Choice(name="audio", value="audio")
+    ])
+    async def metrics(self, interaction: discord.Interaction, tipo: str = "general"):
+        """Mostrar métricas del bot"""
+        try:
+            await interaction.response.defer()
+            logger.info(f"Comando metrics ejecutado con tipo: {tipo}")
+            
+            # Obtener estadísticas
+            stats = self.bot.metrics_manager.get_guild_stats(interaction.guild_id)
+            
+            embed = discord.Embed(
+                title="📊 Métricas del Bot",
+                color=discord.Color.blue()
+            )
+
+            if tipo == "general":
+                # Métricas generales
+                embed.add_field(
+                    name="🎙️ Conexiones de Voz",
+                    value=f"Total: {stats['voice']['total_connections']}\n"
+                          f"Tasa de éxito: {stats['voice']['connection_success_rate']:.1f}%",
+                    inline=False
+                )
+                embed.add_field(
+                    name="🔊 Audio",
+                    value=f"Total reproducidos: {stats['audio']['total_played']}\n"
+                          f"Tasa de éxito: {stats['audio']['success_rate']:.1f}%",
+                    inline=False
+                )
+                embed.add_field(
+                    name="⏱️ Tiempos",
+                    value=f"Tiempo total de audio: {stats['audio']['total_duration']}\n"
+                          f"Tiempo promedio en cola: {stats['audio']['average_queue_time']}",
+                    inline=False
+                )
+
+            elif tipo == "voice":
+                # Métricas de voz
+                embed.add_field(
+                    name="📊 Conexiones",
+                    value=f"Total intentos: {stats['voice']['total_connections']}\n"
+                          f"Conexiones fallidas: {stats['voice']['failed_connections']}\n"
+                          f"Tasa de éxito: {stats['voice']['connection_success_rate']:.1f}%",
+                    inline=False
+                )
+                embed.add_field(
+                    name="🔌 Desconexiones",
+                    value=f"Total: {stats['voice']['total_disconnections']}\n"
+                          f"Inesperadas: {stats['voice']['unexpected_disconnections']}\n"
+                          f"Tasa de desconexiones inesperadas: {stats['voice']['unexpected_disconnection_rate']:.1f}%",
+                    inline=False
+                )
+                embed.add_field(
+                    name="⏱️ Tiempo Total",
+                    value=f"Tiempo en canales: {stats['voice']['total_audio_time']}",
+                    inline=False
+                )
+
+            else:  # audio
+                # Métricas de audio
+                embed.add_field(
+                    name="📊 Reproducciones",
+                    value=f"Total en cola: {stats['audio']['total_queued']}\n"
+                          f"Reproducidos: {stats['audio']['total_played']}\n"
+                          f"Fallidos: {stats['audio']['failed_playbacks']}",
+                    inline=False
+                )
+                embed.add_field(
+                    name="⏱️ Tiempos",
+                    value=f"Duración total: {stats['audio']['total_duration']}\n"
+                          f"Tiempo promedio en cola: {stats['audio']['average_queue_time']}",
+                    inline=False
+                )
+                embed.add_field(
+                    name="📈 Rendimiento",
+                    value=f"Tasa de éxito: {stats['audio']['success_rate']:.1f}%",
+                    inline=False
+                )
+
+            await interaction.followup.send(embed=embed)
+            
+        except Exception as e:
+            logger.error(f"Error en comando metrics: {str(e)}")
+            await interaction.followup.send("❌ Error al obtener métricas")
+
 async def setup(bot):
     await bot.add_cog(CommandsCog(bot)) 

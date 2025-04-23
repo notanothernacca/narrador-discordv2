@@ -27,7 +27,7 @@ Bot de Discord que proporciona funcionalidades de traducción y texto a voz (TTS
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/TU_USUARIO/narrador-discord.git
+git clone https://github.com/notanothernacca/narrador-discord.git
 cd narrador-discord
 
 # Crear directorios necesarios

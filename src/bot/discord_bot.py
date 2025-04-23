@@ -6,6 +6,7 @@ import time
 from services.translator import TranslationService
 from services.tts import TTSService
 from services.queue_manager import AudioQueueManager
+from services.metrics_manager import MetricsManager
 from utils.config import Config
 
 logger = logging.getLogger(__name__)
@@ -23,15 +24,23 @@ class NarradorBot(commands.Bot):
         )
         
         # Inicializar servicios
+        logger.info("Iniciando servicios...")
         self.translator = TranslationService()
+        logger.info("TranslationService iniciado")
         self.tts = TTSService()
-        self.queue_manager = AudioQueueManager()
+        logger.info("TTSService iniciado")
+        self.metrics_manager = MetricsManager()
+        logger.info("MetricsManager iniciado")
+        self.queue_manager = AudioQueueManager(self)
+        logger.info("AudioQueueManager iniciado")
         
         # Cargar configuración
         self.config = Config()
+        logger.info("Configuración cargada")
         
         # Registrar eventos
         self.setup_events()
+        logger.info("Eventos registrados")
         
     async def setup_hook(self):
         """Configuración inicial del bot"""
@@ -39,13 +48,17 @@ class NarradorBot(commands.Bot):
         
     async def load_cogs(self):
         """Cargar todos los cogs (comandos y eventos)"""
+        logger.info("Iniciando carga de cogs...")
         for filename in os.listdir('./src/bot/cogs'):
             if filename.endswith('.py'):
                 try:
+                    logger.info(f'Intentando cargar cog: {filename}')
                     await self.load_extension(f'bot.cogs.{filename[:-3]}')
-                    logger.info(f'Cog cargado: {filename}')
+                    logger.info(f'Cog cargado exitosamente: {filename}')
                 except Exception as e:
                     logger.error(f'Error al cargar cog {filename}: {str(e)}')
+                    logger.error(f'Detalles del error: {e.__class__.__name__}')
+        logger.info("Proceso de carga de cogs finalizado")
                     
     def setup_events(self):
         """Configurar eventos del bot"""
@@ -53,6 +66,13 @@ class NarradorBot(commands.Bot):
         @self.event
         async def on_ready():
             logger.info(f'Bot conectado como {self.user.name}')
+            # Sincronizar comandos slash
+            try:
+                logger.info("Sincronizando comandos...")
+                await self.tree.sync()
+                logger.info("Comandos sincronizados exitosamente")
+            except Exception as e:
+                logger.error(f"Error sincronizando comandos: {str(e)}")
             await self.change_presence(activity=discord.Game(name="/help para comandos"))
             
         @self.event
