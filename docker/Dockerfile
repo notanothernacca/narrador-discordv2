@@ -25,7 +25,6 @@ COPY . .
 
 # Establecer variables de entorno
 ENV PYTHONPATH=/app
-ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
 ENV PYTHONUNBUFFERED=1
 
 # Comando para ejecutar el bot
